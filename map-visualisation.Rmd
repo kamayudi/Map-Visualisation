@@ -1,7 +1,6 @@
 ---
 title: "Map Visualisation"
-author: "Apri Kamayudi"
-email : "apri.kamayudi@gmail.com"
+author: "Apri Kamayudin Kasiran"
 date: "03/08/2020"
 output: github_document
 ---
