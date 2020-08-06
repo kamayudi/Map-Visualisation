@@ -1,19 +1,23 @@
 ---
 title: "Map Visualisation"
-author: "Apri Kamayudin"
+author: "Apri Kamayudi"
 date: "03/08/2020"
-output: github_document
+output: 
+  github_document:
+    # toc: true
+    # toc_depth: 2
+    # keep_html: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Use data provided in the library
+# Use data provided in the library
 
 reference <https://www.r-graph-gallery.com/175-choropleth-map-cartography-pkg.html>.
 
-```{r}
+```{r warning=FALSE}
 # Use the cartography library to do the choropleth map
 library(cartography)
 
@@ -22,18 +26,18 @@ data(nuts2006)
 
 # Build a choropleth
 choroLayer(spdf = nuts2.spdf, df = nuts2.df, var = "pop2008" , legend.pos = "right")
-title("Population in 2008")
+# title("Population in 2008")
 ```
 
-## Data provided in a shape file
+# Use data provided in a shape file
 reference <https://www.r-graph-gallery.com/175-choropleth-map-cartography-pkg.html>
 
 ...
 
-```{r}
+```{r warning=FALSE}
 # Download the shape file from the web and unzip it:
 download.file("http://thematicmapping.org/downloads/TM_WORLD_BORDERS_SIMPL-0.3.zip" , destfile="world_shape_file.zip")
-system("unzip world_shape_file.zip")
+# system("unzip world_shape_file.zip")
 
 # Load it as a geospatial object in R
 library(rgdal)
@@ -45,7 +49,146 @@ africa@data$POP2005 <- as.numeric(africa@data$POP2005)
 # Use the cartography library to do the choropleth map
 library(cartography)
 choroLayer(spdf = africa, df = africa@data, var = "POP2005")
-title("Number of people living in Africa in 2005")
+# title("Number of people living in Africa in 2005")
 ```
+
+# Use data in geoJSON format : USA
+```{r}
+library(plotly)
+library(rjson)
+
+url <- 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json'
+counties <- rjson::fromJSON(file=url)
+url2<- "https://raw.githubusercontent.com/plotly/datasets/master/fips-unemp-16.csv"
+df <- read.csv(url2, colClasses=c(fips="character"))
+g <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showlakes = TRUE,
+  lakecolor = toRGB('white')
+)
+fig <- plot_ly()
+fig <- fig %>% add_trace(
+    type="choropleth",
+    geojson=counties,
+    locations=df$fips,
+    z=df$unemp,
+    colorscale="Viridis",
+    zmin=0,
+    zmax=12,
+    marker=list(line=list(
+      width=0)
+    )
+  )
+fig <- fig %>% colorbar(title = "Unemployment Rate (%)")
+fig <- fig %>% layout(
+    title = "2016 US Unemployment by County"
+)
+
+fig <- fig %>% layout(
+    geo = g
+  )
+
+fig
+```
+
+# Use data in geoJSON format : Victoria
+reference: <https://towardsdatascience.com/r-and-leaflet-to-create-interactive-choropleth-maps-8515ef83e275>
+```{r}
+library(rgeos)
+library(maptools)
+library(leaflet)
+
+setwd("C:/Users/kamayudi/Documents/GitHub/Map-Visualisation/")
+vicmapdata <- readShapeSpatial("vic-july-2018-esri/E_AUGFN3_region.shp")
+plot(vicmapdata)
+
+electiondata <- read.csv("vic_elect_results.csv")
+summary(electiondata)
+colnames(electiondata) <- c("Divisions", "State", "Party", "Marginal Votes")
+summary(electiondata)
+
+summary(vicmapdata)
+vicmapdata$Elect_div
+
+electiondata$Divisions
+
+setdiff(electiondata$Division, vicmapdata$Elect_div)
+
+which(electiondata$Division=="McEwen")
+vicmapdata$Elect_div[31]
+
+vicmapdata$Elect_div <- electiondata$Divisions
+setdiff(electiondata$Division, vicmapdata$Elect_div)
+
+leaflet(vicmapdata) %>%
+  addPolygons(
+    stroke = TRUE, 
+    color = 'White', 
+    weight = 1.5, 
+    )
+
+mylabels <- paste(
+  "Electorate: ", vicmapdata$Elect_div, "<br/>",
+  "Party: ", electiondata$Party, "<br/>",
+  "Margin(votes): ", electiondata$`Marginal Votes`
+) %>%
+  lapply(htmltools::HTML)
+
+leaflet(vicmapdata) %>%
+  addPolygons(
+    stroke = TRUE, 
+    color = 'White', 
+    weight = 1.5, 
+    label = mylabels,
+    labelOptions = labelOptions( 
+      style = list("font-weight" = "normal", padding = "3px 8px"), 
+      textsize = "13px", 
+      direction = "auto"
+    )
+    )
+
+factpal <- colorFactor(topo.colors(5), unique(electiondata$Party))
+leaflet(vicmapdata) %>%
+  addPolygons(
+    fillColor = ~factpal(electiondata$Party), 
+    stroke = TRUE, 
+    color = 'White', 
+    weight = 1.5, 
+    label = mylabels,
+    labelOptions = labelOptions( 
+      style = list("font-weight" = "normal", padding = "3px 8px"), 
+      textsize = "13px", 
+      direction = "auto"
+    )
+    )
+
+htmltitle <- "<h5> How Victoria voted in the 2019 Federal Election | House of Representatives</h5>"
+
+references <- "<h5>References</h5><a target='_blank' href='https://results.aec.gov.au/24310/Website/HouseDivisionalResults-24310.htm'><h5>Election Data</h5></a><a target='_blank' href='https://aec.gov.au/Electorates/gis/gis_datadownload.htm'><h5>Geometric Data</h5></a>"
+
+leaflet(vicmapdata) %>%
+  addPolygons(
+    fillColor = ~factpal(electiondata$Party), 
+    stroke = TRUE, 
+    color = 'White', 
+    weight = 1.5, 
+    label = mylabels,
+    labelOptions = labelOptions( 
+      style = list("font-weight" = "normal", padding = "3px 8px"), 
+      textsize = "13px", 
+      direction = "auto"
+    )
+    ) %>%
+  addLegend( pal=factpal, 
+             values=~electiondata$Party, 
+             opacity=0.3, 
+             title = "Political Party", 
+             position = "bottomleft" 
+             ) %>%
+  addControl(html=htmltitle, position = "topright") %>%
+  addControl(html=references, position = "bottomright")
+```
+
 
 

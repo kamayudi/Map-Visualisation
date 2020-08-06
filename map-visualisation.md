@@ -1,7 +1,11 @@
 Map Visualisation
 ================
-Apri Kamayudin
+Apri Kamayudi
 03/08/2020
+
+  - [Use data provided in the
+    library](#use-data-provided-in-the-library)
+  - [Data provided in a shape file](#data-provided-in-a-shape-file)
 
 ## Use data provided in the library
 
@@ -34,8 +38,6 @@ reference
 download.file("http://thematicmapping.org/downloads/TM_WORLD_BORDERS_SIMPL-0.3.zip" , destfile="world_shape_file.zip")
 system("unzip world_shape_file.zip")
 ```
-
-    ## Warning in system("unzip world_shape_file.zip"): 'unzip' not found
 
     ## [1] 127
 
